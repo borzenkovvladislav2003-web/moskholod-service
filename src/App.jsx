@@ -6,7 +6,9 @@ import TrustSection from './components/TrustSection';
 import Footer from './components/Footer';
 import SuccessModal from './components/SuccessModal';
 import DispatcherPanel from './components/DispatcherPanel';
-import { Wrench, Bell } from 'lucide-react';
+import SocialProofToast from './components/SocialProofToast';
+import { submitLead } from './services/leadService';
+import { Wrench } from 'lucide-react';
 
 const INITIAL_DEMO_LEADS = [
   {
@@ -19,6 +21,7 @@ const INITIAL_DEMO_LEADS = [
     metro: 'м. Сокол',
     urgency: 'Срочно (в течение 45–90 минут)',
     discount: '15%',
+    estimatedPrice: 'от 1 650 ₽',
     status: 'IN_PROGRESS',
     createdAt: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
   },
@@ -32,6 +35,7 @@ const INITIAL_DEMO_LEADS = [
     metro: 'м. Университет',
     urgency: 'Сегодня во второй половине дня',
     discount: '15%',
+    estimatedPrice: 'от 1 150 ₽',
     status: 'DONE',
     createdAt: new Date(Date.now() - 110 * 60 * 1000).toISOString(),
   }
@@ -58,42 +62,13 @@ export default function App() {
     localStorage.setItem('sergey_leads', JSON.stringify(leads));
   }, [leads]);
 
-  // Send to Telegram if configured
-  const sendToTelegram = async (lead) => {
-    const token = localStorage.getItem('sergey_tg_token');
-    const chatId = localStorage.getItem('sergey_tg_chat_id');
-    if (!token || !chatId) return;
-
-    try {
-      const text = `🔔 <b>НОВЫЙ ЛИД: Ремонт холодильников (Москва)</b>\n\n` +
-        `👤 <b>Имя:</b> ${lead.name || 'Не указано'}\n` +
-        `📞 <b>Телефон:</b> <code>${lead.phone}</code>\n` +
-        `❄️ <b>Марка:</b> ${lead.brand}\n` +
-        `⚠️ <b>Поломка:</b> ${lead.breakdown}\n` +
-        `📍 <b>Район:</b> ${lead.district} ${lead.metro ? `(${lead.metro})` : ''}\n` +
-        `🕒 <b>Срочность:</b> ${lead.urgency}\n` +
-        `🏷️ <b>Скидка:</b> ${lead.discount}\n` +
-        `🆔 <b>Код заявки:</b> ${lead.id}\n\n` +
-        `⚡ <i>Время реагирования: до 5 минут!</i>`;
-
-      await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: text,
-          parse_mode: 'HTML',
-        }),
-      });
-    } catch (err) {
-      console.warn('Telegram send error:', err);
-    }
-  };
-
-  const handleQuizSubmit = (newLead) => {
+  const handleQuizSubmit = async (newLead) => {
+    // 1. Optimistic local update
     setLeads((prev) => [newLead, ...prev]);
     setActiveModalLead(newLead);
-    sendToTelegram(newLead);
+
+    // 2. Submit to serverless backend (Netlify Function / Telegram / Sheets)
+    await submitLead(newLead);
   };
 
   const handleUpdateStatus = (id, newStatus) => {
@@ -102,11 +77,11 @@ export default function App() {
     );
   };
 
-  const handleAddDemoLead = () => {
-    const mockNames = ['Михаил', 'Елена', 'Дмитрий', 'Ольга', 'Владимир'];
-    const mockBrands = ['Liebherr', 'Indesit', 'Атлант', 'LG', 'Haier'];
-    const mockDistricts = ['ЦАО (Тверской)', 'ЗАО (Кунцево)', 'СВАО (ВДНХ)', 'ЮАО (Автозаводская)'];
-    const mockBreakdowns = ['Не морозит верхняя камера', 'Сильный шум компрессора', 'Намерзает лёд', 'Не включается'];
+  const handleAddDemoLead = async () => {
+    const mockNames = ['Михаил', 'Елена', 'Дмитрий', 'Ольга', 'Владимир', 'Сергей'];
+    const mockBrands = ['Liebherr', 'Indesit', 'Атлант', 'LG', 'Haier', 'Bosch'];
+    const mockDistricts = ['ЦАО (Тверской)', 'ЗАО (Кунцево)', 'СВАО (ВДНХ)', 'ЮАО (Автозаводская)', 'САО (Аэропорт)'];
+    const mockBreakdowns = ['Не морозит верхняя камера', 'Сильный шум компрессора', 'Намерзает толстый лёд', 'Не включается'];
 
     const randomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
@@ -120,12 +95,13 @@ export default function App() {
       metro: 'рядом с метро',
       urgency: 'Срочно (в течение 45–90 минут)',
       discount: '15%',
+      estimatedPrice: 'от 1 450 ₽',
       status: 'NEW',
       createdAt: new Date().toISOString(),
     };
 
     setLeads((prev) => [demoLead, ...prev]);
-    sendToTelegram(demoLead);
+    await submitLead(demoLead);
   };
 
   const handleClearLeads = () => {
@@ -157,6 +133,9 @@ export default function App() {
 
       {/* Footer */}
       <Footer onOpenDispatcher={() => setIsDispatcherOpen(true)} />
+
+      {/* Social Proof Realtime Toast */}
+      <SocialProofToast />
 
       {/* Floating Dispatcher Trigger for Mobile / Sergey Preview */}
       <div className="fixed bottom-4 right-4 z-30">

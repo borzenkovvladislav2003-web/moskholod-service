@@ -12,24 +12,27 @@ import {
   ShieldAlert, 
   PlusCircle, 
   Trash2,
-  Bell
+  Bell,
+  Table
 } from 'lucide-react';
 
 export default function DispatcherPanel({ leads, onClose, onUpdateStatus, onAddDemoLead, onClearLeads }) {
-  const [tgConfig, setTgConfig] = useState(() => {
+  const [config, setConfig] = useState(() => {
     return {
       botToken: localStorage.getItem('sergey_tg_token') || '',
       chatId: localStorage.getItem('sergey_tg_chat_id') || '',
+      sheetsUrl: localStorage.getItem('sergey_sheets_url') || '',
     };
   });
   const [saveStatus, setSaveStatus] = useState('');
 
-  const handleSaveTg = (e) => {
+  const handleSaveConfig = (e) => {
     e.preventDefault();
-    localStorage.setItem('sergey_tg_token', tgConfig.botToken);
-    localStorage.setItem('sergey_tg_chat_id', tgConfig.chatId);
-    setSaveStatus('Сохранено!');
-    setTimeout(() => setSaveStatus(''), 2000);
+    localStorage.setItem('sergey_tg_token', config.botToken);
+    localStorage.setItem('sergey_tg_chat_id', config.chatId);
+    localStorage.setItem('sergey_sheets_url', config.sheetsUrl);
+    setSaveStatus('Настройки сохранены!');
+    setTimeout(() => setSaveStatus(''), 2500);
   };
 
   const getStatusBadge = (status) => {
@@ -222,42 +225,61 @@ export default function DispatcherPanel({ leads, onClose, onUpdateStatus, onAddD
           )}
         </div>
 
-        {/* Telegram Bot Direct Binding Tab (Footer) */}
+        {/* Telegram & Sheets Integrations (Footer) */}
         <div className="bg-slate-50 p-4 border-t border-slate-200 shrink-0 text-xs">
           <details className="cursor-pointer">
             <summary className="font-bold text-slate-800 hover:text-blue-600 flex items-center justify-between">
               <span className="flex items-center gap-1.5">
                 <Send className="w-3.5 h-3.5 text-blue-500" />
-                Настройка отправки прямо в Telegram-чат Сергея
+                Настройка боевой отправки (Telegram + Google Таблица)
               </span>
               <span className="text-slate-400 font-normal">развернуть</span>
             </summary>
-            <form onSubmit={handleSaveTg} className="mt-3 space-y-2">
+            <form onSubmit={handleSaveConfig} className="mt-3 space-y-2.5">
               <p className="text-slate-500 text-[11px]">
-                Как только Сергей создаст бота (через @BotFather) или даст ID своей рабочей группы, впишите их сюда. Все заявки с сайта будут падать ему в канал за 1 секунду.
+                Впишите данные Telegram-бота и ссылку на Google Таблицу Сергея. Заявки будут параллельно лететь в Telegram со звуком и логироваться в Google Sheets.
               </p>
+              
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-0.5">Telegram Bot Token:</label>
+                  <input
+                    type="text"
+                    placeholder="71829...:AA..."
+                    value={config.botToken}
+                    onChange={(e) => setConfig({ ...config, botToken: e.target.value })}
+                    className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs w-full font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 mb-0.5">Telegram Chat ID:</label>
+                  <input
+                    type="text"
+                    placeholder="-100... или @channel"
+                    value={config.chatId}
+                    onChange={(e) => setConfig({ ...config, chatId: e.target.value })}
+                    className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs w-full font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-slate-600 mb-0.5">Google Sheets Webhook URL:</label>
                 <input
                   type="text"
-                  placeholder="Bot Token (например: 71829...)"
-                  value={tgConfig.botToken}
-                  onChange={(e) => setTgConfig({ ...tgConfig, botToken: e.target.value })}
-                  className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs w-full"
-                />
-                <input
-                  type="text"
-                  placeholder="Chat ID (например: -100... или @group)"
-                  value={tgConfig.chatId}
-                  onChange={(e) => setTgConfig({ ...tgConfig, chatId: e.target.value })}
-                  className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs w-full"
+                  placeholder="https://script.google.com/macros/s/.../exec"
+                  value={config.sheetsUrl}
+                  onChange={(e) => setConfig({ ...config, sheetsUrl: e.target.value })}
+                  className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs w-full font-mono"
                 />
               </div>
+
               <div className="flex items-center justify-between pt-1">
                 <button
                   type="submit"
-                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-semibold text-xs"
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-xs transition-colors"
                 >
-                  Сохранить настройки Telegram
+                  Сохранить интеграции
                 </button>
                 {saveStatus && <span className="text-emerald-600 font-bold">{saveStatus}</span>}
               </div>

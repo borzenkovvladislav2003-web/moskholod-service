@@ -11,17 +11,18 @@ import {
   Clock, 
   Wrench,
   ThumbsUp,
-  Tag
+  Tag,
+  Calculator
 } from 'lucide-react';
 
 const BREAKDOWNS = [
-  { id: 'not_cooling', label: 'Не морозит / слабо холодит', icon: '❄️', desc: 'Компрессор работает, но холода нет' },
-  { id: 'not_starting', label: 'Не включается / щёлкает', icon: '🔌', desc: 'Щелкает реле или тишина при включении' },
-  { id: 'leaking', label: 'Течёт вода (внутри или под ним)', icon: '💧', desc: 'Лужа на полу или под нижними ящиками' },
-  { id: 'freezing_ice', label: 'Намерзает шуба / толстый лёд', icon: '🧊', desc: 'Снег на задней стенке в камерах' },
-  { id: 'noisy', label: 'Сильно шумит / стучит / гудит', icon: '🔊', desc: 'Непривычный скрежет или вибрация' },
-  { id: 'error_beep', label: 'Пищит / мигает ошибка на дисплее', icon: '⚠️', desc: 'Коды ошибок или аварийный сигнал' },
-  { id: 'other', label: 'Другая поломка / нужна диагностика', icon: '🔧', desc: 'Опишу мастеру по телефону' },
+  { id: 'not_cooling', label: 'Не морозит / слабо холодит', icon: '❄️', desc: 'Компрессор работает, но холода нет', basePrice: 1900 },
+  { id: 'not_starting', label: 'Не включается / щёлкает', icon: '🔌', desc: 'Щелкает реле или тишина при включении', basePrice: 1500 },
+  { id: 'leaking', label: 'Течёт вода (внутри или под ним)', icon: '💧', desc: 'Лужа на полу или под нижними ящиками', basePrice: 1100 },
+  { id: 'freezing_ice', label: 'Намерзает шуба / толстый лёд', icon: '🧊', desc: 'Снег на задней стенке в камерах', basePrice: 1400 },
+  { id: 'noisy', label: 'Сильно шумит / стучит / гудит', icon: '🔊', desc: 'Непривычный скрежет или вибрация', basePrice: 1300 },
+  { id: 'error_beep', label: 'Пищит / мигает ошибка на дисплее', icon: '⚠️', desc: 'Коды ошибок или аварийный сигнал', basePrice: 1700 },
+  { id: 'other', label: 'Другая поломка / нужна диагностика', icon: '🔧', desc: 'Опишу мастеру по телефону', basePrice: 1200 },
 ];
 
 const BRANDS = [
@@ -62,12 +63,18 @@ export default function Quiz({ onQuizSubmit }) {
     urgency: '',
     name: '',
     phone: '',
+    company_website: '', // honeypot
   });
   const [phoneError, setPhoneError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const totalSteps = 5;
   const progressPercent = Math.round((step / totalSteps) * 100);
+
+  // Dynamic price calculation
+  const selectedBreakdownObj = BREAKDOWNS.find(b => b.label === formData.breakdown);
+  const basePrice = selectedBreakdownObj ? selectedBreakdownObj.basePrice : 1500;
+  const discountedPrice = Math.round(basePrice * 0.85);
 
   const handleNext = () => {
     if (step < totalSteps) setStep(step + 1);
@@ -110,13 +117,14 @@ export default function Quiz({ onQuizSubmit }) {
       id: 'REQ-' + Math.floor(1000 + Math.random() * 9000),
       createdAt: new Date().toISOString(),
       discount: '15%',
+      estimatedPrice: `от ${discountedPrice.toLocaleString('ru-RU')} ₽`,
       status: 'NEW',
     };
 
     setTimeout(() => {
       setIsSubmitting(false);
       onQuizSubmit(submission);
-    }, 600);
+    }, 400);
   };
 
   return (
@@ -129,7 +137,7 @@ export default function Quiz({ onQuizSubmit }) {
               <Sparkles className="w-4 h-4" />
               <span>Шаг {step} из {totalSteps}</span>
             </span>
-            <span className="flex items-center gap-1 text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded-full text-[11px]">
+            <span className="flex items-center gap-1 text-amber-300 bg-amber-400/20 px-2.5 py-0.5 rounded-full text-[11px] font-bold">
               <Tag className="w-3 h-3" />
               Скидка 15% закреплена
             </span>
@@ -147,7 +155,7 @@ export default function Quiz({ onQuizSubmit }) {
             {step === 2 && '2. Укажите марку вашего холодильника'}
             {step === 3 && '3. В каком округе или районе Москвы вы находитесь?'}
             {step === 4 && '4. Насколько срочно нужен выезд мастера?'}
-            {step === 5 && '5. Расчет готов! Куда прислать расчет и закрепить скидку?'}
+            {step === 5 && '5. Расчёт готов! Куда прислать расчет и закрепить скидку?'}
           </h2>
         </div>
 
@@ -308,24 +316,51 @@ export default function Quiz({ onQuizSubmit }) {
             </div>
           )}
 
-          {/* STEP 5: Final Contacts & Discount Lock */}
+          {/* STEP 5: Final Contacts & Dynamic Price Lock */}
           {step === 5 && (
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Summary Card */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl p-4 text-xs sm:text-sm">
-                <div className="flex items-center justify-between font-bold text-slate-900 border-b border-blue-200/60 pb-2 mb-2">
-                  <span>Предварительный расчёт:</span>
-                  <span className="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-black">
+              {/* Dynamic Price Banner */}
+              <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-emerald-50 border border-blue-200/80 rounded-2xl p-4 text-xs sm:text-sm shadow-xs">
+                <div className="flex items-center justify-between font-bold text-slate-900 border-b border-blue-200/60 pb-2 mb-2.5">
+                  <span className="flex items-center gap-1.5 text-blue-700">
+                    <Calculator className="w-4 h-4" />
+                    Предварительный расчёт:
+                  </span>
+                  <span className="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-black text-xs">
                     Скидка 15% зафиксирована
                   </span>
                 </div>
-                <div className="space-y-1 text-slate-600 text-xs">
+
+                <div className="flex items-baseline justify-between mb-2 pb-2 border-b border-blue-100">
+                  <span className="text-slate-600 font-medium">Стоимость работы мастера:</span>
+                  <div className="text-right">
+                    <span className="text-xs text-slate-400 line-through mr-1.5">
+                      {basePrice.toLocaleString('ru-RU')} ₽
+                    </span>
+                    <span className="text-base sm:text-lg font-black text-emerald-600">
+                      от {discountedPrice.toLocaleString('ru-RU')} ₽
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-1 text-slate-600 text-[11px] sm:text-xs">
                   <div>• Поломка: <span className="font-semibold text-slate-800">{formData.breakdown || 'Диагностика'}</span></div>
                   <div>• Марка: <span className="font-semibold text-slate-800">{formData.brand || 'Не указана'}</span></div>
                   <div>• Локация: <span className="font-semibold text-slate-800">{formData.district || 'Москва'} {formData.metro && `(${formData.metro})`}</span></div>
-                  <div>• Выезд: <span className="font-semibold text-emerald-700">0 ₽ (Бесплатно при ремонте)</span></div>
+                  <div>• Выезд мастера и осмотр: <span className="font-semibold text-emerald-700">0 ₽ (Бесплатно при ремонте)</span></div>
                 </div>
               </div>
+
+              {/* Honeypot hidden input */}
+              <input
+                type="text"
+                name="company_website"
+                value={formData.company_website}
+                onChange={(e) => setFormData({ ...formData, company_website: e.target.value })}
+                className="hidden"
+                tabIndex="-1"
+                autoComplete="off"
+              />
 
               {/* Name */}
               <div>
@@ -345,7 +380,7 @@ export default function Quiz({ onQuizSubmit }) {
               {/* Phone */}
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Номер телефона (для звонка мастера):
+                  Номер телефона (для согласования времени с мастером):
                 </label>
                 <input
                   type="tel"
@@ -383,7 +418,7 @@ export default function Quiz({ onQuizSubmit }) {
 
               <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 text-center">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Данные защищены. Никакого спама, только звонок мастера для согласования.</span>
+                <span>Данные защищены. Никакого спама, только звонок мастера для согласования времени.</span>
               </div>
             </form>
           )}
