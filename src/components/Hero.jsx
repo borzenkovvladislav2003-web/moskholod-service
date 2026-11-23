@@ -17,7 +17,7 @@ export default function Hero({ onStartQuiz }) {
         </h1>
 
         <p className="text-sm sm:text-base md:text-lg text-slate-600 max-w-2xl mx-auto mb-6">
-          Ответьте на 4 вопроса за 1 минуту: рассчитайте примерную стоимость ремонта и зафиксируйте <span className="font-bold text-slate-900 bg-amber-100 px-1.5 py-0.5 rounded">скидку 15%</span> на работу мастера.
+          Ответьте на 4 вопроса за 1 минуту: рассчитайте примерную стоимость ремонта и зафиксируйте <span className="font-bold text-slate-900 bg-amber-100 px-1.5 py-0.5 rounded">скидку 10%</span> на работу мастера.
         </p>
 
         {/* Big CTA Button */}
@@ -27,7 +27,7 @@ export default function Hero({ onStartQuiz }) {
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-base md:text-lg shadow-lg shadow-blue-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
           >
             <Zap className="w-5 h-5 text-amber-300 fill-amber-300" />
-            <span>Рассчитать стоимость со скидкой 15%</span>
+            <span>Рассчитать стоимость со скидкой 10%</span>
           </button>
         </div>
 

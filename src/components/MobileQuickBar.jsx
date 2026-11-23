@@ -9,7 +9,7 @@ export default function MobileQuickBar({ onScrollToQuiz }) {
         className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 active:from-blue-700 active:to-indigo-700 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 shadow-md shadow-blue-500/25 transition-all"
       >
         <Calculator className="w-4 h-4 text-amber-300" />
-        <span>Рассчитать стоимость со скидкой 15%</span>
+        <span>Рассчитать стоимость со скидкой 10%</span>
         <ArrowRight className="w-4 h-4 text-white/80" />
       </button>
     </div>

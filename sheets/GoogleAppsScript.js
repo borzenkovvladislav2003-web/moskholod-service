@@ -114,7 +114,7 @@ function doPost(e) {
       payload.breakdown || "Диагностика",
       (payload.district || "") + (payload.metro ? " (" + payload.metro + ")" : ""),
       payload.urgency || "Срочно",
-      payload.discount || "15%",
+      payload.discount || "10%",
       payload.estimatedPrice || "от 1 350 ₽",
       "🔥 Новый",
       "", // Мастер

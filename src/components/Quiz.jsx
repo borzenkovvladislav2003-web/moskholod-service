@@ -76,7 +76,7 @@ export default function Quiz({ onQuizSubmit }) {
   // Dynamic price calculation
   const selectedBreakdownObj = BREAKDOWNS.find(b => b.label === formData.breakdown);
   const basePrice = selectedBreakdownObj ? selectedBreakdownObj.basePrice : 1500;
-  const discountedPrice = Math.round(basePrice * 0.85);
+  const discountedPrice = Math.round(basePrice * 0.90);
 
   const handleNext = () => {
     if (step < totalSteps) setStep(step + 1);
@@ -119,7 +119,7 @@ export default function Quiz({ onQuizSubmit }) {
       ...formData,
       id: leadId,
       createdAt: new Date().toISOString(),
-      discount: '15%',
+      discount: '10%',
       estimatedPrice: `от ${discountedPrice.toLocaleString('ru-RU')} ₽`,
       status: 'NEW',
     };
@@ -155,7 +155,7 @@ export default function Quiz({ onQuizSubmit }) {
             </span>
             <span className="flex items-center gap-1 text-amber-300 bg-amber-400/20 px-2.5 py-0.5 rounded-full text-[11px] font-bold">
               <Tag className="w-3 h-3" />
-              Скидка 15% закреплена
+              Скидка 10% закреплена
             </span>
           </div>
 
@@ -343,7 +343,7 @@ export default function Quiz({ onQuizSubmit }) {
                     Предварительный расчёт:
                   </span>
                   <span className="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded font-black text-xs">
-                    Скидка 15% зафиксирована
+                    Скидка 10% зафиксирована
                   </span>
                 </div>
 
@@ -351,7 +351,7 @@ export default function Quiz({ onQuizSubmit }) {
                   <span className="text-slate-600 font-medium">Стоимость работы мастера:</span>
                   <div className="text-right">
                     <span className="text-xs text-slate-400 line-through mr-1.5">
-                      {basePrice.toLocaleString('ru-RU')} ₽
+                      от {basePrice.toLocaleString('ru-RU')} ₽
                     </span>
                     <span className="text-base sm:text-lg font-black text-emerald-600">
                       от {discountedPrice.toLocaleString('ru-RU')} ₽
@@ -440,7 +440,7 @@ export default function Quiz({ onQuizSubmit }) {
                   <span>Передаём заявку дежурному мастеру...</span>
                 ) : (
                   <>
-                    <span>Вызвать мастера со скидкой 15%</span>
+                    <span>Вызвать мастера со скидкой 10%</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}

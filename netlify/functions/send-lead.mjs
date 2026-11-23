@@ -75,7 +75,7 @@ export default async (req, context) => {
       district: data.district || 'Москва',
       metro: data.metro || '',
       urgency: data.urgency || 'Срочно',
-      discount: data.discount || '15%',
+      discount: data.discount || '10%',
       estimatedPrice: data.estimatedPrice || 'от 1 350 ₽',
       date: formattedDate,
       time: formattedTime,
