@@ -83,14 +83,36 @@ export default async (req, context) => {
       createdAt: now.toISOString(),
     };
 
-    // 4. Send to Telegram (if credentials exist)
-    const tgToken = process.env.TELEGRAM_BOT_TOKEN || data.tgToken;
-    const tgChatId = process.env.TELEGRAM_CHAT_ID || data.tgChatId;
+    // 4. Server-Side Channel Delivery (ONLY via process.env - NEVER from client payload)
+    const tgToken = process.env.TELEGRAM_BOT_TOKEN;
+    const tgChatId = process.env.TELEGRAM_CHAT_ID;
+    const sheetsUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL;
+
+    const tgConfigured = Boolean(tgToken && tgChatId);
+    const sheetsConfigured = Boolean(sheetsUrl);
+
+    // If no notification channel is configured on server:
+    if (!tgConfigured && !sheetsConfigured) {
+      console.warn('send-lead: No delivery channels configured (missing TELEGRAM_BOT_TOKEN/CHAT_ID and GOOGLE_SHEETS_WEBHOOK_URL)');
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error: 'CHANNELS_NOT_CONFIGURED',
+          message: 'Серверные каналы оповещения (Telegram / Google Sheets) ещё не подключены.',
+          leadId: lead.id,
+          channels: {
+            telegram: { configured: false, sent: false },
+            sheets: { configured: false, sent: false }
+          }
+        }), 
+        { status: 503, headers: corsHeaders }
+      );
+    }
 
     let tgSent = false;
     let tgError = null;
 
-    if (tgToken && tgChatId) {
+    if (tgConfigured) {
       try {
         const text = 
           `🚨 <b>НОВЫЙ ЛИД: РЕМОНТ ХОЛОДИЛЬНИКА</b>\n` +
@@ -132,38 +154,66 @@ export default async (req, context) => {
         const tgResult = await tgRes.json();
         tgSent = tgResult.ok === true;
         if (!tgSent) {
-          tgError = tgResult.description || 'Failed to send to Telegram';
+          tgError = tgResult.description || 'Telegram API returned non-ok status';
         }
       } catch (err) {
         tgError = err.message;
       }
     }
 
-    // 5. Send to Google Sheets (if Webhook URL exists)
-    const sheetsUrl = process.env.GOOGLE_SHEETS_WEBHOOK_URL || data.sheetsWebhookUrl;
+    // 5. Send to Google Sheets (if Webhook URL configured on server)
     let sheetsSent = false;
+    let sheetsError = null;
 
-    if (sheetsUrl) {
+    if (sheetsConfigured) {
       try {
-        await fetch(sheetsUrl, {
+        const sheetRes = await fetch(sheetsUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(lead),
         });
-        sheetsSent = true;
+        sheetsSent = sheetRes.ok;
+        if (!sheetsSent) {
+          sheetsError = `Google Sheets HTTP ${sheetRes.status}`;
+        }
       } catch (err) {
+        sheetsError = err.message;
         console.warn('Sheets webhook error:', err);
       }
     }
 
-    // 6. Return response
+    // 6. Delivery confirmation evaluation
+    // If configured channels completely failed to deliver:
+    const anySent = tgSent || sheetsSent;
+    if (!anySent) {
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error: 'DELIVERY_FAILED',
+          message: 'Не удалось доставить уведомление о заявке ни по одному из настроенных каналов.',
+          leadId: lead.id,
+          channels: {
+            telegram: { configured: tgConfigured, sent: tgSent, error: tgError },
+            sheets: { configured: sheetsConfigured, sent: sheetsSent, error: sheetsError }
+          }
+        }), 
+        { status: 502, headers: corsHeaders }
+      );
+    }
+
+    // Partial vs full success
+    const isFull = (!tgConfigured || tgSent) && (!sheetsConfigured || sheetsSent);
+
     return new Response(
       JSON.stringify({
         ok: true,
+        deliveryStatus: isFull ? 'CONFIRMED_FULL' : 'CONFIRMED_PARTIAL',
         leadId: lead.id,
         lead: lead,
-        telegram: { sent: tgSent, error: tgError },
-        sheets: { sent: sheetsSent },
+        channels: {
+          telegram: { configured: tgConfigured, sent: tgSent, error: tgError },
+          sheets: { configured: sheetsConfigured, sent: sheetsSent, error: sheetsError }
+        }
       }), 
       { status: 200, headers: corsHeaders }
     );

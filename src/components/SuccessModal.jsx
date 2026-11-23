@@ -1,8 +1,10 @@
 import React from 'react';
-import { CheckCircle2, Phone, MessageSquare, Clock, MapPin, X } from 'lucide-react';
+import { CheckCircle2, ShieldCheck, X } from 'lucide-react';
 
 export default function SuccessModal({ lead, onClose }) {
   if (!lead) return null;
+
+  const isPartial = lead.deliveryStatus === 'CONFIRMED_PARTIAL';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
@@ -22,14 +24,14 @@ export default function SuccessModal({ lead, onClose }) {
 
         {/* Title */}
         <div className="inline-block px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full mb-2">
-          Заявка {lead.id} принята!
+          Заявка {lead.id} подтверждена
         </div>
         <h3 className="text-xl font-black text-slate-900 mb-2">
-          Мастер уже уведомлён
+          {isPartial ? 'Заявка принята в обработку' : 'Уведомление доставлено'}
         </h3>
         <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-          Спасибо, <span className="font-bold text-slate-800">{lead.name}</span>! Заявка передана дежурному мастеру по округу <span className="font-semibold text-blue-600">{lead.district}</span>. 
-          Он перезвонит вам на <span className="font-bold text-slate-900">{lead.phone}</span> в течение <span className="font-bold text-emerald-600">3–5 минут</span>.
+          Спасибо, <span className="font-bold text-slate-800">{lead.name}</span>! Заявка передана по округу <span className="font-semibold text-blue-600">{lead.district}</span>. 
+          Диспетчер свяжется с вами по номеру <span className="font-bold text-slate-900">{lead.phone}</span> для согласования точного времени выезда мастера.
         </p>
 
         {/* Lead details summary */}
@@ -52,21 +54,13 @@ export default function SuccessModal({ lead, onClose }) {
           </div>
         </div>
 
-        {/* Emergency direct contact */}
+        {/* Action button */}
         <div className="space-y-2">
-          <a
-            href="tel:+74951204488"
-            className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-colors"
-          >
-            <Phone className="w-4 h-4 text-emerald-400" />
-            <span>Если вопрос срочный: +7 (495) 120-44-88</span>
-          </a>
-
           <button
             onClick={onClose}
-            className="w-full py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800"
+            className="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm transition-colors"
           >
-            Закрыть окно
+            Понятно, закрыть
           </button>
         </div>
       </div>

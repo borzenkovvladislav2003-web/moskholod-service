@@ -1,7 +1,7 @@
 import React from 'react';
-import { Phone, Clock, MapPin, ShieldCheck, Wrench } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 
-export default function Header({ onOpenDispatcher }) {
+export default function Header() {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
       <div className="max-w-5xl mx-auto px-4 py-3">
@@ -25,24 +25,11 @@ export default function Header({ onOpenDispatcher }) {
 
           {/* Right Actions */}
           <div className="flex items-center gap-2 md:gap-4">
-            {/* Quick Dispatcher Trigger for Sergey demo */}
-            <button
-              onClick={onOpenDispatcher}
-              className="hidden sm:flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-blue-600 bg-slate-100 hover:bg-blue-50 px-2.5 py-1.5 rounded-lg transition-colors border border-slate-200"
-              title="Открыть Лид-Хаб диспетчера"
-            >
-              <Wrench className="w-3.5 h-3.5 text-blue-600" />
-              <span>Панель диспетчера</span>
-            </button>
-
-            {/* Phone */}
             <a
-              href="tel:+74951204488"
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 md:px-4 md:py-2 rounded-xl font-semibold text-xs md:text-sm shadow-sm transition-all active:scale-95"
+              href="#quiz-calculator"
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3.5 py-2 md:px-4 md:py-2 rounded-xl font-semibold text-xs md:text-sm shadow-sm transition-all active:scale-95"
             >
-              <Phone className="w-3.5 h-3.5 animate-bounce" />
-              <span className="hidden md:inline">+7 (495) 120-44-88</span>
-              <span className="md:hidden">Позвонить</span>
+              <span>Рассчитать стоимость</span>
             </a>
           </div>
         </div>

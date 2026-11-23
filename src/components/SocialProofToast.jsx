@@ -43,7 +43,7 @@ export default function SocialProofToast() {
   if (!currentEvent || !isVisible) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 z-30 max-w-xs sm:max-w-sm bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-3 shadow-xl shadow-slate-900/10 transition-all duration-300 animate-slide-up flex items-start gap-2.5">
+    <div className="fixed bottom-20 md:bottom-4 left-4 z-30 max-w-xs sm:max-w-sm bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl p-3 shadow-xl shadow-slate-900/10 transition-all duration-300 animate-slide-up flex items-start gap-2.5">
       <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
         <CheckCircle2 className="w-4 h-4 stroke-[2.5]" />
       </div>

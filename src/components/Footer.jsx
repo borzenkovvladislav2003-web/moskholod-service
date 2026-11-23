@@ -1,7 +1,7 @@
 import React from 'react';
-import { Phone, MapPin, ShieldCheck, Wrench } from 'lucide-react';
+import { MapPin, ShieldCheck } from 'lucide-react';
 
-export default function Footer({ onOpenDispatcher }) {
+export default function Footer() {
   return (
     <footer className="bg-slate-900 text-slate-400 py-8 text-xs border-t border-slate-800">
       <div className="max-w-4xl mx-auto px-4">
@@ -13,20 +13,7 @@ export default function Footer({ onOpenDispatcher }) {
           </div>
 
           <div className="flex items-center gap-4">
-            <button
-              onClick={onOpenDispatcher}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-colors"
-            >
-              <Wrench className="w-3.5 h-3.5 text-blue-400" />
-              <span>Панель диспетчера</span>
-            </button>
-
-            <a
-              href="tel:+74951204488"
-              className="font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
-            >
-              +7 (495) 120-44-88
-            </a>
+            <span className="text-slate-300 font-medium">Приём заявок на сайте: круглосуточно</span>
           </div>
         </div>
 

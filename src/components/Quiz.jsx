@@ -55,6 +55,7 @@ const TIMINGS = [
 
 export default function Quiz({ onQuizSubmit }) {
   const [step, setStep] = useState(1);
+  const [leadId] = useState(() => 'REQ-' + Math.floor(1000 + Math.random() * 9000));
   const [formData, setFormData] = useState({
     breakdown: '',
     brand: '',
@@ -66,6 +67,7 @@ export default function Quiz({ onQuizSubmit }) {
     company_website: '', // honeypot
   });
   const [phoneError, setPhoneError] = useState('');
+  const [submitFeedback, setSubmitFeedback] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const totalSteps = 5;
@@ -102,7 +104,7 @@ export default function Quiz({ onQuizSubmit }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const rawPhone = formData.phone.replace(/\D/g, '');
     if (rawPhone.length < 11) {
@@ -110,21 +112,35 @@ export default function Quiz({ onQuizSubmit }) {
       return;
     }
     setPhoneError('');
+    setSubmitFeedback(null);
     setIsSubmitting(true);
 
     const submission = {
       ...formData,
-      id: 'REQ-' + Math.floor(1000 + Math.random() * 9000),
+      id: leadId,
       createdAt: new Date().toISOString(),
       discount: '15%',
       estimatedPrice: `от ${discountedPrice.toLocaleString('ru-RU')} ₽`,
       status: 'NEW',
     };
 
-    setTimeout(() => {
+    try {
+      const res = await onQuizSubmit(submission);
       setIsSubmitting(false);
-      onQuizSubmit(submission);
-    }, 400);
+
+      if (!res || !res.success) {
+        setSubmitFeedback({
+          type: 'error',
+          message: res?.message || 'Не удалось подтвердить доставку заявки. Серверные каналы оповещения не подтвердили получение.'
+        });
+      }
+    } catch (err) {
+      setIsSubmitting(false);
+      setSubmitFeedback({
+        type: 'error',
+        message: 'Произошла непредвиденная ошибка при отправке заявки. Данные в форме сохранены.'
+      });
+    }
   };
 
   return (
@@ -399,6 +415,20 @@ export default function Quiz({ onQuizSubmit }) {
                   </p>
                 )}
               </div>
+
+              {/* Server-side delivery feedback */}
+              {submitFeedback && (
+                <div className="p-3.5 rounded-2xl border border-amber-300 bg-amber-50 text-amber-950 text-xs flex items-start gap-2.5 animate-fade-in">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-bold text-amber-900 mb-0.5">Внимание: статус доставки</div>
+                    <div>{submitFeedback.message}</div>
+                    <div className="text-[11px] text-amber-700/90 mt-1">
+                      Данные заявки ({leadId}) сохранены в форме. Вы можете нажать кнопку повторно.
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Submit CTA */}
               <button
