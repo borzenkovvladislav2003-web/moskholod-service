@@ -3,10 +3,14 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import Quiz from './components/Quiz';
 import TrustSection from './components/TrustSection';
+import MastersSection from './components/MastersSection';
+import ReviewsSection from './components/ReviewsSection';
+import FaqSection from './components/FaqSection';
 import Footer from './components/Footer';
 import SuccessModal from './components/SuccessModal';
 import DispatcherPanel from './components/DispatcherPanel';
 import SocialProofToast from './components/SocialProofToast';
+import MobileQuickBar from './components/MobileQuickBar';
 import { submitLead } from './services/leadService';
 import { Wrench } from 'lucide-react';
 
@@ -129,6 +133,9 @@ export default function App() {
         <Hero onStartQuiz={scrollToQuiz} />
         <Quiz onQuizSubmit={handleQuizSubmit} />
         <TrustSection onSelectService={scrollToQuiz} />
+        <MastersSection onSelectMaster={scrollToQuiz} />
+        <ReviewsSection />
+        <FaqSection />
       </main>
 
       {/* Footer */}
@@ -137,8 +144,11 @@ export default function App() {
       {/* Social Proof Realtime Toast */}
       <SocialProofToast />
 
-      {/* Floating Dispatcher Trigger for Mobile / Sergey Preview */}
-      <div className="fixed bottom-4 right-4 z-30">
+      {/* Mobile Sticky Quick Action Bar */}
+      <MobileQuickBar onScrollToQuiz={scrollToQuiz} />
+
+      {/* Floating Dispatcher Trigger for Desktop / Sergey Preview */}
+      <div className="hidden md:block fixed bottom-4 right-4 z-30">
         <button
           onClick={() => setIsDispatcherOpen(true)}
           className="flex items-center gap-2 px-4 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl shadow-xl shadow-slate-900/30 border border-slate-700 text-xs font-bold transition-all transform hover:scale-105 active:scale-95"

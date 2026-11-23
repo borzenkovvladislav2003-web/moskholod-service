@@ -4,13 +4,55 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>❄️</text></svg>" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta name="description" content="Срочный ремонт холодильников в Москве на дому с гарантией до 2 лет. Выезд мастера за 45 минут во все районы Москвы и МО." />
-    <title>Ремонт холодильников в Москве на дому | Выезд за 45 минут | Гарантия</title>
+    <meta name="description" content="Срочный ремонт холодильников в Москве на дому с гарантией до 2 лет. Выезд дежурного мастера за 45 минут во все округа Москвы и МО. Оригинальные запчасти в наличии." />
+    <meta name="keywords" content="ремонт холодильников москва, мастер по ремонту холодильников на дому, заправка фреоном москва, срочный ремонт холодильников" />
+    
+    <!-- Geo Meta -->
+    <meta name="geo.region" content="RU-MOW" />
+    <meta name="geo.placename" content="Москва" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Срочный ремонт холодильников в Москве на дому | Выезд от 45 мин" />
+    <meta property="og:description" content="Рассчитайте стоимость ремонта за 1 минуту и получите скидку 15% на работу мастера. Бесплатный выезд и диагностика при ремонте." />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ru_RU" />
+    
+    <title>Ремонт холодильников в Москве на дому | Выезд за 45 минут | Гарантия 2 года</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Schema.org Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "HomeAndConstructionBusiness",
+      "name": "МосХолод Сервис",
+      "image": "https://moskholod-sergey.netlify.app/favicon.svg",
+      "telephone": "+74951204488",
+      "priceRange": "от 950 руб",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Москва",
+        "addressRegion": "Москва",
+        "addressCountry": "RU"
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+        ],
+        "opens": "08:00",
+        "closes": "23:00"
+      },
+      "areaServed": [
+        "ЦАО", "САО", "СВАО", "ВАО", "ЮВАО", "ЮАО", "ЮЗАО", "ЗАО", "СЗАО", "Новая Москва"
+      ]
+    }
+    </script>
   </head>
-  <body class="bg-slate-50 text-slate-800 antialiased font-['Inter',sans-serif]">
+  <body class="bg-slate-50 text-slate-800 antialiased font-['Inter',sans-serif] pb-16 md:pb-0">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
