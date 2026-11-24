@@ -17,8 +17,14 @@ export async function submitLead(leadData) {
   };
 
   try {
-    // 2. Call serverless Netlify function
-    const response = await fetch('/api/send-lead', {
+    // 2. Call serverless API endpoint (auto-routes to live backend on GitHub Pages)
+    const apiUrl = import.meta.env.VITE_API_URL || (
+      typeof window !== 'undefined' && window.location.hostname.includes('github.io')
+        ? 'https://moskholod-service.netlify.app/api/send-lead'
+        : '/api/send-lead'
+    );
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
