@@ -148,9 +148,9 @@ export default async (req, context) => {
   const tgChatId = (process.env.TELEGRAM_CHAT_ID || '').trim();
   const knownSecrets = [hmacSecret, tgToken, sheetsUrl].filter(Boolean);
 
-  const sheetsTimeoutMs = Math.max(50, Number(process.env.SHEETS_FETCH_TIMEOUT_MS) || 4500);
-  const tgTimeoutMs = Math.max(50, Number(process.env.TELEGRAM_FETCH_TIMEOUT_MS) || 3000);
-  const confirmTimeoutMs = Math.max(50, Number(process.env.CONFIRM_FETCH_TIMEOUT_MS) || 2000);
+  const sheetsTimeoutMs = Math.max(50, Number(process.env.SHEETS_FETCH_TIMEOUT_MS) || 8000);
+  const tgTimeoutMs = Math.max(50, Number(process.env.TELEGRAM_FETCH_TIMEOUT_MS) || 5000);
+  const confirmTimeoutMs = Math.max(50, Number(process.env.CONFIRM_FETCH_TIMEOUT_MS) || 8000);
 
   try {
     let data = null;
