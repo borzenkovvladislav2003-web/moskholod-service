@@ -5,15 +5,17 @@ import {
   Check, 
   AlertCircle, 
   Sparkles, 
-  Flame, 
   ShieldCheck, 
-  MapPin, 
-  Clock, 
-  Wrench,
-  ThumbsUp,
   Tag,
   Calculator
 } from 'lucide-react';
+
+export function generateSecureLeadId() {
+  const bytes = new Uint8Array(12); // 96 бит криптостойкой энтропии (24 hex-символа)
+  globalThis.crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  return `REQ-${hex}`; // 28 символов (совместимо с GAS v2.3: 8..64 символов, [A-Za-z0-9_-])
+}
 
 const BREAKDOWNS = [
   { id: 'not_cooling', label: 'Не морозит / слабо холодит', icon: '❄️', desc: 'Компрессор работает, но холода нет', basePrice: 1900 },
@@ -55,7 +57,7 @@ const TIMINGS = [
 
 export default function Quiz({ onQuizSubmit }) {
   const [step, setStep] = useState(1);
-  const [leadId] = useState(() => 'REQ-' + Math.floor(1000 + Math.random() * 9000));
+  const [leadId] = useState(() => generateSecureLeadId());
   const [formData, setFormData] = useState({
     breakdown: '',
     brand: '',
@@ -69,12 +71,13 @@ export default function Quiz({ onQuizSubmit }) {
   const [phoneError, setPhoneError] = useState('');
   const [submitFeedback, setSubmitFeedback] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRetryLocked, setIsRetryLocked] = useState(false);
 
   const totalSteps = 5;
   const progressPercent = Math.round((step / totalSteps) * 100);
 
   // Dynamic price calculation
-  const selectedBreakdownObj = BREAKDOWNS.find(b => b.label === formData.breakdown);
+  const selectedBreakdownObj = BREAKDOWNS.find((b) => b.label === formData.breakdown);
   const basePrice = selectedBreakdownObj ? selectedBreakdownObj.basePrice : 1500;
   const discountedPrice = Math.round(basePrice * 0.90);
 
@@ -97,7 +100,7 @@ export default function Quiz({ onQuizSubmit }) {
     if (val.length >= 4) formatted += ') ' + val.substring(3, 6);
     if (val.length >= 7) formatted += '-' + val.substring(6, 8);
     if (val.length >= 9) formatted += '-' + val.substring(8, 10);
-    
+
     setFormData({ ...formData, phone: formatted.trim() });
     if (val.length === 10) {
       setPhoneError('');
@@ -106,19 +109,36 @@ export default function Quiz({ onQuizSubmit }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const rawPhone = formData.phone.replace(/\D/g, '');
-    if (rawPhone.length < 11) {
-      setPhoneError('Пожалуйста, введите полный номер телефона');
+    if (isRetryLocked) return;
+
+    const rawDigits = formData.phone.replace(/\D/g, '');
+    let e164Phone = '';
+
+    // Безопасная нормализация к международному формату E.164 (^\+[1-9]\d{7,14}$)
+    if (formData.phone.startsWith('+') && /^\+[1-9]\d{7,14}$/.test(formData.phone.trim())) {
+      e164Phone = formData.phone.trim();
+    } else if (rawDigits.length === 11 && (rawDigits.startsWith('7') || rawDigits.startsWith('8'))) {
+      e164Phone = '+7' + rawDigits.substring(1);
+    } else if (rawDigits.length === 10) {
+      e164Phone = '+7' + rawDigits;
+    } else {
+      setPhoneError('Пожалуйста, введите полный номер телефона в формате +7 (XXX) XXX-XX-XX');
       return;
     }
+
+    if (!/^\+[1-9]\d{7,14}$/.test(e164Phone)) {
+      setPhoneError('Некорректный международный формат номера телефона');
+      return;
+    }
+
     setPhoneError('');
     setSubmitFeedback(null);
     setIsSubmitting(true);
 
     const submission = {
       ...formData,
+      phone: e164Phone,
       id: leadId,
-      createdAt: new Date().toISOString(),
       discount: '10%',
       estimatedPrice: `от ${discountedPrice.toLocaleString('ru-RU')} ₽`,
       status: 'NEW',
@@ -129,16 +149,41 @@ export default function Quiz({ onQuizSubmit }) {
       setIsSubmitting(false);
 
       if (!res || !res.success) {
+        if (res?.error === 'REPAIR_REQUIRED') {
+          setIsRetryLocked(true);
+          setSubmitFeedback({
+            type: 'repair_required',
+            title: 'Заявка уже сохранена и передана на ручную сверку',
+            message: res.message || 'Ваша заявка уже записана в реестр диспетчера. Повторная автоматическая отправка заблокирована, чтобы исключить дубли.',
+            retryAllowed: false,
+          });
+          return;
+        }
+
+        if (res?.status === 409 || res?.retryAllowed === false) {
+          setSubmitFeedback({
+            type: 'conflict',
+            title: 'Повторная отправка с тем же ID отклонена',
+            message: res?.message || 'Заявка с этим идентификатором уже зарегистрирована в системе. Повторная отправка не требуется.',
+            retryAllowed: false,
+          });
+          return;
+        }
+
         setSubmitFeedback({
           type: 'error',
-          message: res?.message || 'Не удалось подтвердить доставку заявки. Серверные каналы оповещения не подтвердили получение.'
+          title: 'Внимание: не удалось подтвердить отправку',
+          message: res?.message || 'Не удалось подтвердить приём заявки сервером.',
+          retryAllowed: true,
         });
       }
-    } catch (err) {
+    } catch {
       setIsSubmitting(false);
       setSubmitFeedback({
         type: 'error',
-        message: 'Произошла непредвиденная ошибка при отправке заявки. Данные в форме сохранены.'
+        title: 'Ошибка соединения',
+        message: 'Произошла непредвиденная ошибка при отправке заявки. Данные в форме сохранены.',
+        retryAllowed: true,
       });
     }
   };
@@ -284,11 +329,11 @@ export default function Quiz({ onQuizSubmit }) {
 
               <div className="mt-4 pt-3 border-t border-slate-100">
                 <label className="block text-xs font-medium text-slate-700 mb-1">
-                  Улица или станция метро (необязательно):
+                  Станция метро (необязательно):
                 </label>
                 <input
                   type="text"
-                  placeholder="Например: м. Сокол, Ленинградский пр-т"
+                  placeholder="Например: Сокол"
                   value={formData.metro}
                   onChange={(e) => setFormData({ ...formData, metro: e.target.value })}
                   className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -386,10 +431,11 @@ export default function Quiz({ onQuizSubmit }) {
                 <input
                   type="text"
                   required
+                  disabled={isRetryLocked}
                   placeholder="Как к вам обращаться?"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                  className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium disabled:bg-slate-100 disabled:text-slate-500"
                 />
               </div>
 
@@ -401,10 +447,11 @@ export default function Quiz({ onQuizSubmit }) {
                 <input
                   type="tel"
                   required
+                  disabled={isRetryLocked}
                   placeholder="+7 (___) ___-__-__"
                   value={formData.phone}
                   onChange={handlePhoneChange}
-                  className={`w-full px-3.5 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 font-medium ${
+                  className={`w-full px-3.5 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-2 font-medium disabled:bg-slate-100 disabled:text-slate-500 ${
                     phoneError ? 'border-red-500 focus:ring-red-400' : 'border-slate-300 focus:ring-blue-500'
                   }`}
                 />
@@ -418,13 +465,35 @@ export default function Quiz({ onQuizSubmit }) {
 
               {/* Server-side delivery feedback */}
               {submitFeedback && (
-                <div className="p-3.5 rounded-2xl border border-amber-300 bg-amber-50 text-amber-950 text-xs flex items-start gap-2.5 animate-fade-in">
-                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div
+                  className={`p-3.5 rounded-2xl border text-xs flex items-start gap-2.5 animate-fade-in ${
+                    submitFeedback.type === 'repair_required'
+                      ? 'border-blue-300 bg-blue-50 text-blue-950'
+                      : 'border-amber-300 bg-amber-50 text-amber-950'
+                  }`}
+                >
+                  <AlertCircle
+                    className={`w-4 h-4 shrink-0 mt-0.5 ${
+                      submitFeedback.type === 'repair_required' ? 'text-blue-600' : 'text-amber-600'
+                    }`}
+                  />
                   <div>
-                    <div className="font-bold text-amber-900 mb-0.5">Внимание: статус доставки</div>
+                    <div
+                      className={`font-bold mb-0.5 ${
+                        submitFeedback.type === 'repair_required' ? 'text-blue-900' : 'text-amber-900'
+                      }`}
+                    >
+                      {submitFeedback.title || 'Внимание: статус доставки'}
+                    </div>
                     <div>{submitFeedback.message}</div>
-                    <div className="text-[11px] text-amber-700/90 mt-1">
-                      Данные заявки ({leadId}) сохранены в форме. Вы можете нажать кнопку повторно.
+                    <div
+                      className={`text-[11px] mt-1 ${
+                        submitFeedback.type === 'repair_required' ? 'text-blue-800/90' : 'text-amber-700/90'
+                      }`}
+                    >
+                      {submitFeedback.retryAllowed
+                        ? `Данные заявки (${leadId}) сохранены в форме. Вы можете повторить отправку через несколько секунд.`
+                        : `Номер обращения: ${leadId}. Повторно отправлять форму не нужно — диспетчер проверит запись вручную.`}
                     </div>
                   </div>
                 </div>
@@ -433,11 +502,13 @@ export default function Quiz({ onQuizSubmit }) {
               {/* Submit CTA */}
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-base shadow-lg shadow-emerald-600/25 transition-all transform active:scale-98 flex items-center justify-center gap-2"
+                disabled={isSubmitting || isRetryLocked}
+                className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 disabled:from-slate-400 disabled:to-slate-500 disabled:shadow-none disabled:cursor-not-allowed text-white font-bold text-base shadow-lg shadow-emerald-600/25 transition-all transform active:scale-98 flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
-                  <span>Передаём заявку дежурному мастеру...</span>
+                  <span>Передаём заявку диспетчеру...</span>
+                ) : isRetryLocked ? (
+                  <span>Заявка сохранена (на ручной сверке)</span>
                 ) : (
                   <>
                     <span>Вызвать мастера со скидкой 10%</span>
@@ -448,7 +519,7 @@ export default function Quiz({ onQuizSubmit }) {
 
               <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 text-center">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Данные защищены. Никакого спама, только звонок мастера для согласования времени.</span>
+                <span>Данные защищены. Никакого спама, только звонок диспетчера для согласования времени.</span>
               </div>
             </form>
           )}

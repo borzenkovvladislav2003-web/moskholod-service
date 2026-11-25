@@ -30,12 +30,16 @@ export default function App() {
       return { success: true, lead: result.lead };
     }
 
-    // 3. If delivery failed or channels unconfigured, return honest error to form
+    // 3. If delivery failed, conflicted (409 REPAIR_REQUIRED), or channels unconfigured, return honest status to form
     return {
       success: false,
+      status: result.status,
       error: result.error,
+      statusDetail: result.statusDetail,
+      retryAllowed: result.retryAllowed,
       message: result.message || 'Сервер не смог подтвердить приём заявки.',
       channels: result.channels,
+      leadId: result.leadId || newLead.id,
     };
   };
 
